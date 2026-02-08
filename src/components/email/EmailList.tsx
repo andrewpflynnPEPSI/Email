@@ -102,7 +102,8 @@ export default function EmailList() {
     threads, selectedIndex, setSelectedIndex,
     setSelectedThreadId, setSelectedThread,
     isLoading, accounts, activeAccountId,
-    nextPageToken,
+    nextPageToken, setThreads, setNextPageToken, setLoading,
+    currentMailbox, searchQuery,
   } = useEmailStore();
 
   const handleSelectThread = (thread: EmailThread, index: number) => {
@@ -153,8 +154,28 @@ export default function EmailList() {
 
       {nextPageToken && (
         <div className="p-4 text-center">
-          <button className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
-            Load more...
+          <button
+            onClick={async () => {
+              setLoading(true);
+              try {
+                const params = new URLSearchParams({ mailbox: currentMailbox, pageToken: nextPageToken });
+                if (searchQuery) params.set('query', searchQuery);
+                const res = await fetch(`/api/emails?${params}`);
+                if (res.ok) {
+                  const data = await res.json();
+                  setThreads([...threads, ...(data.threads || [])]);
+                  setNextPageToken(data.nextPageToken || null);
+                }
+              } catch (error) {
+                console.error('Load more failed:', error);
+              } finally {
+                setLoading(false);
+              }
+            }}
+            disabled={isLoading}
+            className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors disabled:opacity-50"
+          >
+            {isLoading ? 'Loading...' : 'Load more...'}
           </button>
         </div>
       )}

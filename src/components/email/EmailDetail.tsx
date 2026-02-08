@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useEmailStore } from '@/store/email-store';
 import { Email } from '@/types';
-import { formatFullDate, formatRelativeDate, getInitials, cn } from '@/lib/utils';
+import { formatFullDate, formatRelativeDate, getInitials, cn, sanitizeHtml } from '@/lib/utils';
 import {
   Reply, ReplyAll, Forward, Star, Archive, Trash2,
   MoreHorizontal, ChevronDown, ChevronUp, Paperclip,
@@ -79,7 +79,7 @@ function MessageView({ message, isLast, onReply }: {
                          prose-headings:text-white prose-strong:text-white
                          prose-blockquote:border-l-zinc-600 prose-blockquote:text-zinc-400
                          prose-code:text-indigo-300 prose-pre:bg-zinc-800"
-              dangerouslySetInnerHTML={{ __html: message.body }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(message.body) }}
             />
 
             {/* Attachments */}

@@ -49,3 +49,32 @@ export function cn(...classes: (string | false | null | undefined)[]): string {
 export function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
 }
+
+export function sanitizeHtml(html: string): string {
+  // Remove script/style/iframe/object/embed tags and their contents
+  let clean = html
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
+    .replace(/<object[\s\S]*?<\/object>/gi, '')
+    .replace(/<embed[\s\S]*?>/gi, '')
+    .replace(/<link[\s\S]*?>/gi, '')
+    .replace(/<meta[\s\S]*?>/gi, '');
+
+  // Remove event handlers (onclick, onerror, onload, etc.)
+  clean = clean.replace(/\son\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, '');
+
+  // Sanitize href/src to block javascript: protocol
+  clean = clean.replace(/(href|src)\s*=\s*(?:"([^"]*)"|'([^']*)')/gi, (match, attr, dblVal, sglVal) => {
+    const val = (dblVal || sglVal || '').trim().toLowerCase();
+    if (val.startsWith('javascript:') || val.startsWith('data:text/html') || val.startsWith('vbscript:')) {
+      return `${attr}="#"`;
+    }
+    return match;
+  });
+
+  // Force links to open in new tab safely
+  clean = clean.replace(/<a\s/gi, '<a rel="noopener noreferrer" target="_blank" ');
+
+  return clean;
+}

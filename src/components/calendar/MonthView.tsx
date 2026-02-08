@@ -15,10 +15,12 @@ const MAX_VISIBLE_EVENTS = 3;
 export default function MonthView() {
   const {
     calendarDate, setCalendarDate, setCalendarViewMode,
-    calendarEvents, setSelectedEvent, accounts, setCreateEventOpen,
+    visibleCalendarEvents, setSelectedEvent, accounts, setCreateEventOpen,
   } = useEmailStore();
 
-  const currentDate = new Date(calendarDate);
+  const calendarEvents = visibleCalendarEvents();
+
+  const currentDate = useMemo(() => new Date(calendarDate), [calendarDate]);
 
   const days = useMemo(() => {
     const monthStart = startOfMonth(currentDate);

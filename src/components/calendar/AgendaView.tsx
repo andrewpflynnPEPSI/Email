@@ -72,9 +72,11 @@ function EventCard({ event, accountColor, onClick }: {
 
 export default function AgendaView() {
   const {
-    calendarEvents, setSelectedEvent, accounts,
+    visibleCalendarEvents, setSelectedEvent, accounts,
     setCreateEventOpen, calendarLoading,
   } = useEmailStore();
+
+  const calendarEvents = visibleCalendarEvents();
 
   const getAccountColor = (accountId: string) =>
     accounts.find(a => a.id === accountId)?.color || '#6366f1';

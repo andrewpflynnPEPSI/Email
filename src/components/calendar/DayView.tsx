@@ -26,14 +26,18 @@ function getEventPosition(event: CalendarEvent, dayStart: Date) {
 
 export default function DayView() {
   const {
-    calendarDate, setCalendarDate, calendarEvents,
+    calendarDate, setCalendarDate, visibleCalendarEvents,
     setSelectedEvent, accounts, setCreateEventOpen, setCreateEventData,
   } = useEmailStore();
 
-  const currentDate = new Date(calendarDate);
-  const dayStart = new Date(currentDate);
-  dayStart.setHours(0, 0, 0, 0);
+  const calendarEvents = visibleCalendarEvents();
 
+  const currentDate = useMemo(() => new Date(calendarDate), [calendarDate]);
+  const dayStart = useMemo(() => {
+    const d = new Date(currentDate);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, [currentDate]);
   const dayEvents = useMemo(() => {
     const allDay: CalendarEvent[] = [];
     const timed: CalendarEvent[] = [];
@@ -119,7 +123,7 @@ export default function DayView() {
             {HOURS.map(hour => (
               <div key={hour} className="absolute w-full pr-2 text-right" style={{ top: `${hour * HOUR_HEIGHT}px` }}>
                 <span className="text-[10px] text-zinc-500 leading-none -translate-y-1/2 inline-block">
-                  {hour === 0 ? '' : format(new Date().setHours(hour, 0), 'h a')}
+                  {hour === 0 ? '' : format(new Date(2000, 0, 1, hour, 0), 'h a')}
                 </span>
               </div>
             ))}

@@ -68,6 +68,7 @@ interface EmailStore {
   calendarEvents: CalendarEvent[];
   setCalendarEvents: (events: CalendarEvent[]) => void;
   appendCalendarEvents: (events: CalendarEvent[]) => void;
+  visibleCalendarEvents: () => CalendarEvent[];
   calendars: CalendarInfo[];
   setCalendars: (calendars: CalendarInfo[]) => void;
   toggleCalendarVisibility: (calendarId: string) => void;
@@ -107,10 +108,13 @@ export const useEmailStore = create<EmailStore>((set, get) => ({
     const color = ACCOUNT_COLORS[state.accounts.length % ACCOUNT_COLORS.length];
     return { accounts: [...state.accounts, { ...account, color }] };
   }),
-  removeAccount: (id) => set((state) => ({
-    accounts: state.accounts.filter(a => a.id !== id),
-    activeAccountId: state.activeAccountId === id ? (state.accounts[0]?.id || null) : state.activeAccountId,
-  })),
+  removeAccount: (id) => set((state) => {
+    const remaining = state.accounts.filter(a => a.id !== id);
+    return {
+      accounts: remaining,
+      activeAccountId: state.activeAccountId === id ? (remaining[0]?.id || null) : state.activeAccountId,
+    };
+  }),
   setActiveAccount: (id) => set({ activeAccountId: id, threads: [], selectedThreadId: null, selectedThread: null, selectedIndex: 0 }),
 
   // Threads
@@ -179,6 +183,12 @@ export const useEmailStore = create<EmailStore>((set, get) => ({
   appendCalendarEvents: (events) => set((state) => ({
     calendarEvents: [...state.calendarEvents, ...events],
   })),
+  visibleCalendarEvents: () => {
+    const state = get();
+    const hiddenCalIds = new Set(state.calendars.filter(c => !c.visible).map(c => c.id));
+    if (hiddenCalIds.size === 0) return state.calendarEvents;
+    return state.calendarEvents.filter(e => !hiddenCalIds.has(e.calendarId));
+  },
   calendars: [],
   setCalendars: (calendars) => set({ calendars }),
   toggleCalendarVisibility: (calendarId) => set((state) => ({

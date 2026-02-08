@@ -36,8 +36,10 @@ export default function KeyboardShortcuts() {
         return;
       }
 
-      // G prefix for navigation
-      if (gPrefixRef.current) {
+      const isMailView = useEmailStore.getState().currentView === 'mail';
+
+      // G prefix for navigation (mail view only)
+      if (gPrefixRef.current && isMailView) {
         gPrefixRef.current = false;
         clearTimeout(gTimeoutRef.current);
         switch (e.key.toLowerCase()) {
@@ -49,8 +51,9 @@ export default function KeyboardShortcuts() {
         }
         return;
       }
+      gPrefixRef.current = false;
 
-      if (e.key === 'g') {
+      if (isMailView && e.key === 'g') {
         gPrefixRef.current = true;
         gTimeoutRef.current = setTimeout(() => { gPrefixRef.current = false; }, 1000);
         return;
@@ -58,25 +61,30 @@ export default function KeyboardShortcuts() {
 
       switch (e.key) {
         case 'c':
+          if (!isMailView) break;
           e.preventDefault();
           setComposeOpen(true);
           break;
         case '/':
+          if (!isMailView) break;
           e.preventDefault();
           setSearchOpen(true);
           break;
         case 'j':
         case 'ArrowDown':
+          if (!isMailView) break;
           e.preventDefault();
           moveSelection('down');
           break;
         case 'k':
         case 'ArrowUp':
+          if (!isMailView) break;
           e.preventDefault();
           moveSelection('up');
           break;
         case 'Enter':
         case 'o': {
+          if (!isMailView) break;
           e.preventDefault();
           const state = useEmailStore.getState();
           const thread = state.threads[state.selectedIndex];
@@ -86,8 +94,8 @@ export default function KeyboardShortcuts() {
           }
           break;
         }
-        case 'u':
-        case 'Escape': {
+        case 'u': {
+          if (!isMailView) break;
           e.preventDefault();
           const state = useEmailStore.getState();
           state.setSelectedThread(null);

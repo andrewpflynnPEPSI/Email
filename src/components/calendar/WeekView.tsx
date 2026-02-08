@@ -82,11 +82,13 @@ function TimeEvent({ event, dayStart, accountColor, onClick }: {
 
 export default function WeekView() {
   const {
-    calendarDate, setCalendarDate, calendarEvents,
+    calendarDate, setCalendarDate, visibleCalendarEvents,
     setSelectedEvent, accounts, setCreateEventOpen, setCreateEventData,
   } = useEmailStore();
 
-  const currentDate = new Date(calendarDate);
+  const calendarEvents = visibleCalendarEvents();
+
+  const currentDate = useMemo(() => new Date(calendarDate), [calendarDate]);
 
   const weekDays = useMemo(() => {
     const start = startOfWeek(currentDate);
@@ -235,7 +237,7 @@ export default function WeekView() {
                 style={{ top: `${hour * HOUR_HEIGHT}px` }}
               >
                 <span className="text-[10px] text-zinc-500 leading-none -translate-y-1/2 inline-block">
-                  {hour === 0 ? '' : format(new Date().setHours(hour, 0), 'h a')}
+                  {hour === 0 ? '' : format(new Date(2000, 0, 1, hour, 0), 'h a')}
                 </span>
               </div>
             ))}

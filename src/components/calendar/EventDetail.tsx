@@ -3,7 +3,7 @@
 import { useEmailStore } from '@/store/email-store';
 import { CalendarAttendee } from '@/types';
 import { format, parseISO } from 'date-fns';
-import { cn, getInitials } from '@/lib/utils';
+import { cn, getInitials, sanitizeHtml } from '@/lib/utils';
 import {
   X, MapPin, Clock, Users, Video, ExternalLink,
   Calendar, Check, HelpCircle, XCircle, Edit, Trash2,
@@ -157,7 +157,7 @@ export default function EventDetail() {
             <div className="border-t border-zinc-800 pt-4">
               <div
                 className="text-sm text-zinc-300 prose prose-invert prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: selectedEvent.description }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedEvent.description) }}
               />
             </div>
           )}
