@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { EmailAccount, EmailThread, MailboxType, ComposeEmail } from '@/types';
+import { EmailAccount, EmailThread, MailboxType, ComposeEmail, AppView, CalendarViewMode, CalendarEvent, CalendarInfo, CreateEventData } from '@/types';
 
 const ACCOUNT_COLORS = [
   '#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6',
@@ -55,6 +55,30 @@ interface EmailStore {
   // Command Palette
   isCommandPaletteOpen: boolean;
   setCommandPaletteOpen: (open: boolean) => void;
+
+  // App View (mail vs calendar)
+  currentView: AppView;
+  setCurrentView: (view: AppView) => void;
+
+  // Calendar
+  calendarViewMode: CalendarViewMode;
+  setCalendarViewMode: (mode: CalendarViewMode) => void;
+  calendarDate: string; // ISO date string for the current focused date
+  setCalendarDate: (date: string) => void;
+  calendarEvents: CalendarEvent[];
+  setCalendarEvents: (events: CalendarEvent[]) => void;
+  appendCalendarEvents: (events: CalendarEvent[]) => void;
+  calendars: CalendarInfo[];
+  setCalendars: (calendars: CalendarInfo[]) => void;
+  toggleCalendarVisibility: (calendarId: string) => void;
+  selectedEvent: CalendarEvent | null;
+  setSelectedEvent: (event: CalendarEvent | null) => void;
+  isCreateEventOpen: boolean;
+  setCreateEventOpen: (open: boolean) => void;
+  createEventData: Partial<CreateEventData> | null;
+  setCreateEventData: (data: Partial<CreateEventData> | null) => void;
+  calendarLoading: boolean;
+  setCalendarLoading: (loading: boolean) => void;
 }
 
 export const useEmailStore = create<EmailStore>((set, get) => ({
@@ -122,4 +146,34 @@ export const useEmailStore = create<EmailStore>((set, get) => ({
   // Command Palette
   isCommandPaletteOpen: false,
   setCommandPaletteOpen: (open) => set({ isCommandPaletteOpen: open }),
+
+  // App View
+  currentView: 'mail',
+  setCurrentView: (view) => set({ currentView: view }),
+
+  // Calendar
+  calendarViewMode: 'week',
+  setCalendarViewMode: (mode) => set({ calendarViewMode: mode }),
+  calendarDate: new Date().toISOString(),
+  setCalendarDate: (date) => set({ calendarDate: date }),
+  calendarEvents: [],
+  setCalendarEvents: (events) => set({ calendarEvents: events }),
+  appendCalendarEvents: (events) => set((state) => ({
+    calendarEvents: [...state.calendarEvents, ...events],
+  })),
+  calendars: [],
+  setCalendars: (calendars) => set({ calendars }),
+  toggleCalendarVisibility: (calendarId) => set((state) => ({
+    calendars: state.calendars.map(c =>
+      c.id === calendarId ? { ...c, visible: !c.visible } : c
+    ),
+  })),
+  selectedEvent: null,
+  setSelectedEvent: (event) => set({ selectedEvent: event }),
+  isCreateEventOpen: false,
+  setCreateEventOpen: (open) => set({ isCreateEventOpen: open }),
+  createEventData: null,
+  setCreateEventData: (data) => set({ createEventData: data }),
+  calendarLoading: false,
+  setCalendarLoading: (loading) => set({ calendarLoading: loading }),
 }));

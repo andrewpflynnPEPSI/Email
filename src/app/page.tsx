@@ -11,8 +11,13 @@ import SearchOverlay from '@/components/common/SearchOverlay';
 import CommandPalette from '@/components/common/CommandPalette';
 import AccountManager from '@/components/common/AccountManager';
 import KeyboardShortcuts from '@/components/common/KeyboardShortcuts';
+import CalendarView from '@/components/calendar/CalendarView';
 import { cn } from '@/lib/utils';
 import { Plus, Zap } from 'lucide-react';
+import {
+  startOfWeek, endOfWeek, startOfMonth, endOfMonth,
+  addDays,
+} from 'date-fns';
 
 function EmailApp() {
   const { data: session, status } = useSession();
@@ -22,6 +27,9 @@ function EmailApp() {
     currentMailbox, searchQuery,
     selectedThread, splitView,
     setLoading,
+    currentView,
+    calendarDate, calendarViewMode,
+    setCalendarEvents, setCalendars, setCalendarLoading,
   } = useEmailStore();
 
   const [isAccountManagerOpen, setAccountManagerOpen] = useState(false);
@@ -52,6 +60,7 @@ function EmailApp() {
   // Fetch emails
   const fetchEmails = useCallback(async () => {
     if (!session || !(session as any).accessToken) return;
+    if (currentView !== 'mail') return;
 
     setLoading(true);
     try {
@@ -71,11 +80,62 @@ function EmailApp() {
     } finally {
       setLoading(false);
     }
-  }, [currentMailbox, searchQuery, session]);
+  }, [currentMailbox, searchQuery, session, currentView]);
 
   useEffect(() => {
     fetchEmails();
   }, [fetchEmails]);
+
+  // Fetch calendar data
+  const fetchCalendarData = useCallback(async () => {
+    if (!session || !(session as any).accessToken) return;
+    if (currentView !== 'calendar') return;
+
+    setCalendarLoading(true);
+    try {
+      const current = new Date(calendarDate);
+      let timeMin: string;
+      let timeMax: string;
+
+      if (calendarViewMode === 'day') {
+        timeMin = new Date(current.getFullYear(), current.getMonth(), current.getDate()).toISOString();
+        timeMax = addDays(new Date(timeMin), 1).toISOString();
+      } else if (calendarViewMode === 'week') {
+        timeMin = startOfWeek(current).toISOString();
+        timeMax = endOfWeek(current).toISOString();
+      } else if (calendarViewMode === 'month') {
+        timeMin = startOfMonth(current).toISOString();
+        timeMax = endOfMonth(current).toISOString();
+      } else {
+        // agenda: show next 14 days
+        timeMin = new Date().toISOString();
+        timeMax = addDays(new Date(), 14).toISOString();
+      }
+
+      const [eventsRes, calendarsRes] = await Promise.all([
+        fetch(`/api/calendar/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}`),
+        fetch('/api/calendar/calendars'),
+      ]);
+
+      if (eventsRes.ok) {
+        const eventsData = await eventsRes.json();
+        setCalendarEvents(eventsData.events || []);
+      }
+
+      if (calendarsRes.ok) {
+        const calendarsData = await calendarsRes.json();
+        setCalendars(calendarsData.calendars || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch calendar:', error);
+    } finally {
+      setCalendarLoading(false);
+    }
+  }, [session, currentView, calendarDate, calendarViewMode]);
+
+  useEffect(() => {
+    fetchCalendarData();
+  }, [fetchCalendarData]);
 
   if (status === 'loading') {
     return (
@@ -123,46 +183,50 @@ function EmailApp() {
       <Sidebar />
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Email List */}
-        <div className={cn(
-          'flex flex-col border-r border-zinc-800 overflow-hidden transition-all',
-          splitView
-            ? 'w-[400px] min-w-[350px]'
-            : selectedThread ? 'hidden' : 'flex-1'
-        )}>
-          {/* List Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-sm">
-            <div className="flex items-center gap-2">
-              <h2 className="text-sm font-semibold text-white capitalize">{currentMailbox}</h2>
-              {threads.length > 0 && (
-                <span className="text-xs text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded-full">
-                  {threads.length}
-                </span>
-              )}
+      {currentView === 'mail' ? (
+        <div className="flex-1 flex overflow-hidden">
+          {/* Email List */}
+          <div className={cn(
+            'flex flex-col border-r border-zinc-800 overflow-hidden transition-all',
+            splitView
+              ? 'w-[400px] min-w-[350px]'
+              : selectedThread ? 'hidden' : 'flex-1'
+          )}>
+            {/* List Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-sm">
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-white capitalize">{currentMailbox}</h2>
+                {threads.length > 0 && (
+                  <span className="text-xs text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded-full">
+                    {threads.length}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setAccountManagerOpen(true)}
+                  className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors"
+                  title="Manage accounts"
+                >
+                  <Plus size={16} />
+                </button>
+              </div>
             </div>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setAccountManagerOpen(true)}
-                className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors"
-                title="Manage accounts"
-              >
-                <Plus size={16} />
-              </button>
-            </div>
+
+            <EmailList />
           </div>
 
-          <EmailList />
+          {/* Email Detail */}
+          <div className={cn(
+            'flex-1 overflow-hidden',
+            !splitView && !selectedThread && 'hidden'
+          )}>
+            <EmailDetail />
+          </div>
         </div>
-
-        {/* Email Detail */}
-        <div className={cn(
-          'flex-1 overflow-hidden',
-          !splitView && !selectedThread && 'hidden'
-        )}>
-          <EmailDetail />
-        </div>
-      </div>
+      ) : (
+        <CalendarView />
+      )}
 
       {/* Overlays */}
       <ComposeModal />

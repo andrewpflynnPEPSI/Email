@@ -80,3 +80,57 @@ export interface SearchFilters {
   dateBefore?: string;
   label?: string;
 }
+
+// Calendar Types
+export type AppView = 'mail' | 'calendar';
+export type CalendarViewMode = 'day' | 'week' | 'month' | 'agenda';
+
+export interface CalendarAttendee {
+  email: string;
+  name?: string;
+  status: 'accepted' | 'declined' | 'tentative' | 'needsAction';
+  organizer?: boolean;
+}
+
+export interface CalendarEvent {
+  id: string;
+  accountId: string;
+  calendarId: string;
+  title: string;
+  description: string;
+  location?: string;
+  start: string;
+  end: string;
+  allDay: boolean;
+  recurring: boolean;
+  recurrenceRule?: string;
+  status: 'confirmed' | 'tentative' | 'cancelled';
+  attendees: CalendarAttendee[];
+  organizer?: CalendarAttendee;
+  htmlLink?: string;
+  conferenceLink?: string;
+  color?: string;
+  provider: EmailProvider;
+}
+
+export interface CalendarInfo {
+  id: string;
+  accountId: string;
+  name: string;
+  color: string;
+  primary: boolean;
+  visible: boolean;
+  provider: EmailProvider;
+}
+
+export interface CreateEventData {
+  title: string;
+  description?: string;
+  location?: string;
+  start: string;
+  end: string;
+  allDay: boolean;
+  attendees?: string[];
+  calendarId?: string;
+  accountId: string;
+}

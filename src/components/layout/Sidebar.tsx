@@ -17,6 +17,7 @@ import {
   Search,
   Settings,
   Command,
+  Calendar,
 } from 'lucide-react';
 
 const MAILBOXES: { type: MailboxType; label: string; icon: typeof Inbox; shortcut: string }[] = [
@@ -35,6 +36,7 @@ export default function Sidebar() {
     accounts, activeAccountId, setActiveAccount,
     isSidebarCollapsed, toggleSidebar,
     setComposeOpen, setSearchOpen, setCommandPaletteOpen,
+    currentView, setCurrentView,
   } = useEmailStore();
 
   return (
@@ -55,17 +57,84 @@ export default function Sidebar() {
         </button>
       </div>
 
-      {/* Compose Button */}
+      {/* View Switcher */}
+      <div className="p-3 border-b border-zinc-800">
+        {isSidebarCollapsed ? (
+          <div className="flex flex-col gap-1">
+            <button
+              onClick={() => setCurrentView('mail')}
+              className={cn(
+                'p-2.5 rounded-lg flex items-center justify-center transition-colors',
+                currentView === 'mail'
+                  ? 'bg-zinc-800 text-white'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+              )}
+              title="Mail"
+            >
+              <Mail size={18} />
+            </button>
+            <button
+              onClick={() => setCurrentView('calendar')}
+              className={cn(
+                'p-2.5 rounded-lg flex items-center justify-center transition-colors',
+                currentView === 'calendar'
+                  ? 'bg-zinc-800 text-white'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+              )}
+              title="Calendar"
+            >
+              <Calendar size={18} />
+            </button>
+          </div>
+        ) : (
+          <div className="flex bg-zinc-800/50 rounded-lg p-0.5">
+            <button
+              onClick={() => setCurrentView('mail')}
+              className={cn(
+                'flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all',
+                currentView === 'mail'
+                  ? 'bg-zinc-700 text-white shadow-sm'
+                  : 'text-zinc-400 hover:text-white'
+              )}
+            >
+              <Mail size={14} />
+              Mail
+            </button>
+            <button
+              onClick={() => setCurrentView('calendar')}
+              className={cn(
+                'flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all',
+                currentView === 'calendar'
+                  ? 'bg-zinc-700 text-white shadow-sm'
+                  : 'text-zinc-400 hover:text-white'
+              )}
+            >
+              <Calendar size={14} />
+              Calendar
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Compose / New Event Button */}
       <div className="p-3">
         <button
-          onClick={() => setComposeOpen(true)}
+          onClick={() => {
+            if (currentView === 'mail') {
+              setComposeOpen(true);
+            } else {
+              useEmailStore.getState().setCreateEventOpen(true);
+            }
+          }}
           className={cn(
             'flex items-center gap-2 w-full rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium transition-colors',
             isSidebarCollapsed ? 'p-2.5 justify-center' : 'px-4 py-2.5'
           )}
         >
           <Plus size={18} />
-          {!isSidebarCollapsed && <span>Compose</span>}
+          {!isSidebarCollapsed && (
+            <span>{currentView === 'mail' ? 'Compose' : 'New Event'}</span>
+          )}
         </button>
       </div>
 
@@ -92,35 +161,42 @@ export default function Sidebar() {
         )}
       </div>
 
-      {/* Mailboxes */}
-      <nav className="flex-1 px-3 py-2 overflow-y-auto">
-        <div className="space-y-0.5">
-          {MAILBOXES.map(({ type, label, icon: Icon, shortcut }) => (
-            <button
-              key={type}
-              onClick={() => setCurrentMailbox(type)}
-              className={cn(
-                'flex items-center gap-3 w-full rounded-lg transition-all duration-150',
-                isSidebarCollapsed ? 'p-2.5 justify-center' : 'px-3 py-2',
-                currentMailbox === type
-                  ? 'bg-zinc-800 text-white'
-                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
-              )}
-              title={isSidebarCollapsed ? label : undefined}
-            >
-              <Icon size={18} />
-              {!isSidebarCollapsed && (
-                <>
-                  <span className="flex-1 text-left text-sm">{label}</span>
-                  {shortcut && (
-                    <span className="text-xs text-zinc-600">{shortcut}</span>
-                  )}
-                </>
-              )}
-            </button>
-          ))}
-        </div>
-      </nav>
+      {/* Mailboxes (only in mail view) */}
+      {currentView === 'mail' && (
+        <nav className="flex-1 px-3 py-2 overflow-y-auto">
+          <div className="space-y-0.5">
+            {MAILBOXES.map(({ type, label, icon: Icon, shortcut }) => (
+              <button
+                key={type}
+                onClick={() => setCurrentMailbox(type)}
+                className={cn(
+                  'flex items-center gap-3 w-full rounded-lg transition-all duration-150',
+                  isSidebarCollapsed ? 'p-2.5 justify-center' : 'px-3 py-2',
+                  currentMailbox === type
+                    ? 'bg-zinc-800 text-white'
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                )}
+                title={isSidebarCollapsed ? label : undefined}
+              >
+                <Icon size={18} />
+                {!isSidebarCollapsed && (
+                  <>
+                    <span className="flex-1 text-left text-sm">{label}</span>
+                    {shortcut && (
+                      <span className="text-xs text-zinc-600">{shortcut}</span>
+                    )}
+                  </>
+                )}
+              </button>
+            ))}
+          </div>
+        </nav>
+      )}
+
+      {/* Calendar view spacer */}
+      {currentView === 'calendar' && (
+        <div className="flex-1" />
+      )}
 
       {/* Accounts */}
       <div className="border-t border-zinc-800 p-3">
@@ -130,7 +206,6 @@ export default function Sidebar() {
           </p>
         )}
         <div className="space-y-1">
-          {/* Unified inbox option */}
           <button
             onClick={() => setActiveAccount(null)}
             className={cn(

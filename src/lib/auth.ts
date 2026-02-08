@@ -9,7 +9,7 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       authorization: {
         params: {
-          scope: 'openid email profile https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.modify',
+          scope: 'openid email profile https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events',
           access_type: 'offline',
           prompt: 'consent',
         },
@@ -21,7 +21,7 @@ export const authOptions: NextAuthOptions = {
       tenantId: 'common',
       authorization: {
         params: {
-          scope: 'openid email profile offline_access Mail.Read Mail.Send Mail.ReadWrite',
+          scope: 'openid email profile offline_access Mail.Read Mail.Send Mail.ReadWrite Calendars.Read Calendars.ReadWrite',
         },
       },
     }),

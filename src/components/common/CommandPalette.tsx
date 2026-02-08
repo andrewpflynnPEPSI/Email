@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { useEmailStore } from '@/store/email-store';
 import {
   Inbox, Star, Send, FileEdit, Trash2, Mail, Search,
-  Plus, Archive, MailOpen, Tag, ChevronRight, Command,
+  Plus, Archive, MailOpen, Tag, ChevronRight, Command, Calendar,
 } from 'lucide-react';
 
 interface CommandItem {
@@ -20,6 +20,7 @@ export default function CommandPalette() {
   const {
     isCommandPaletteOpen, setCommandPaletteOpen,
     setCurrentMailbox, setComposeOpen, setSearchOpen,
+    setCurrentView, setCalendarViewMode, setCreateEventOpen,
   } = useEmailStore();
 
   const [query, setQuery] = useState('');
@@ -39,7 +40,14 @@ export default function CommandPalette() {
     { id: 'mark-read', label: 'Mark as read', shortcut: 'Shift+I', icon: MailOpen, category: 'Email Actions', action: () => { setCommandPaletteOpen(false); } },
     { id: 'mark-unread', label: 'Mark as unread', shortcut: 'Shift+U', icon: Mail, category: 'Email Actions', action: () => { setCommandPaletteOpen(false); } },
     { id: 'label', label: 'Apply label', shortcut: 'L', icon: Tag, category: 'Email Actions', action: () => { setCommandPaletteOpen(false); } },
-  ], [setCommandPaletteOpen, setComposeOpen, setCurrentMailbox, setSearchOpen]);
+    { id: 'calendar', label: 'Go to Calendar', shortcut: 'G C', icon: Calendar, category: 'Calendar', action: () => { setCommandPaletteOpen(false); setCurrentView('calendar'); } },
+    { id: 'cal-day', label: 'Calendar: Day view', icon: Calendar, category: 'Calendar', action: () => { setCommandPaletteOpen(false); setCurrentView('calendar'); setCalendarViewMode('day'); } },
+    { id: 'cal-week', label: 'Calendar: Week view', icon: Calendar, category: 'Calendar', action: () => { setCommandPaletteOpen(false); setCurrentView('calendar'); setCalendarViewMode('week'); } },
+    { id: 'cal-month', label: 'Calendar: Month view', icon: Calendar, category: 'Calendar', action: () => { setCommandPaletteOpen(false); setCurrentView('calendar'); setCalendarViewMode('month'); } },
+    { id: 'cal-agenda', label: 'Calendar: Agenda view', icon: Calendar, category: 'Calendar', action: () => { setCommandPaletteOpen(false); setCurrentView('calendar'); setCalendarViewMode('agenda'); } },
+    { id: 'new-event', label: 'Create new event', icon: Plus, category: 'Calendar', action: () => { setCommandPaletteOpen(false); setCurrentView('calendar'); setCreateEventOpen(true); } },
+    { id: 'go-mail', label: 'Go to Mail', shortcut: 'G M', icon: Mail, category: 'Navigation', action: () => { setCommandPaletteOpen(false); setCurrentView('mail'); } },
+  ], [setCommandPaletteOpen, setComposeOpen, setCurrentMailbox, setSearchOpen, setCurrentView, setCalendarViewMode, setCreateEventOpen]);
 
   const filtered = useMemo(() => {
     if (!query) return commands;
