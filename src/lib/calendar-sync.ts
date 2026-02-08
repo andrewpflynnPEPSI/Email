@@ -147,6 +147,7 @@ export async function executeSyncRule(
   accountTokens: AccountTokenMap,
   existingSyncedEvents: SyncedEvent[],
   syncWindowDays: number = 30,
+  skipEventIds?: Set<string>,
 ): Promise<SyncResult> {
   const jobId = `job-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const logs: SyncLogEntry[] = [];
@@ -204,6 +205,9 @@ export async function executeSyncRule(
     for (const sourceEvent of sourceEvents) {
       // Skip cancelled events
       if (sourceEvent.status === 'cancelled') continue;
+
+      // Skip events that were created by this sync (prevents blocker-of-blocker in two-way sync)
+      if (skipEventIds && skipEventIds.has(sourceEvent.id)) continue;
 
       const eventHash = hashEvent(sourceEvent);
       const existingSynced = syncedBySourceId.get(sourceEvent.id);
@@ -349,10 +353,20 @@ export async function executeSyncRule(
 
     // 6. Two-way sync: reverse direction
     if (rule.direction === 'two-way') {
+      // Collect all destination event IDs created by the forward sync
+      // so the reverse sync skips them (prevents blocker-of-blocker duplication)
+      const forwardDestEventIds = new Set(updatedSyncedEvents.map(se => se.destinationEventId));
+      const forwardSourceEventIds = new Set(
+        existingSyncedEvents
+          .filter(se => se.syncRuleId === rule.id)
+          .map(se => se.destinationEventId)
+      );
+      const skipEventIds = new Set([...forwardDestEventIds, ...forwardSourceEventIds]);
+
       const reverseResult = await executeSyncRule(
         {
           ...rule,
-          id: `${rule.id}-reverse`,
+          id: rule.id, // Keep same ID so logs are associated with the real rule
           direction: 'one-way', // Prevent infinite recursion
           sourceCalendarId: rule.destinationCalendarId,
           sourceAccountId: rule.destinationAccountId,
@@ -360,8 +374,12 @@ export async function executeSyncRule(
           destinationAccountId: rule.sourceAccountId,
         },
         accountTokens,
-        existingSyncedEvents.filter(se => se.syncRuleId === `${rule.id}-reverse`),
+        existingSyncedEvents.filter(se =>
+          se.syncRuleId === rule.id &&
+          se.sourceAccountId === rule.destinationAccountId
+        ),
         syncWindowDays,
+        skipEventIds, // Pass event IDs to skip
       );
 
       // Merge reverse results

@@ -25,6 +25,7 @@ export default function SyncConfigPanel() {
     isSyncConfigOpen, setSyncConfigOpen,
     accounts, calendars, syncRules,
     addSyncRule, updateSyncRule, removeSyncRule,
+    appendSyncLogs, setActiveSyncJob,
   } = useEmailStore();
 
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -135,6 +136,18 @@ export default function SyncConfigPanel() {
       };
     }
 
+    setActiveSyncJob({
+      id: `pending-${Date.now()}`,
+      syncRuleId: rule.id,
+      status: 'running',
+      startedAt: new Date().toISOString(),
+      completedAt: null,
+      eventsCreated: 0,
+      eventsUpdated: 0,
+      eventsDeleted: 0,
+      errors: [],
+    });
+
     try {
       const res = await fetch('/api/calendar/sync/trigger', {
         method: 'POST',
@@ -148,9 +161,14 @@ export default function SyncConfigPanel() {
           lastSyncAt: new Date().toISOString(),
           lastError: data.job.errors.length > 0 ? data.job.errors[0] : null,
         });
+        setActiveSyncJob(data.job);
+        if (data.logs && data.logs.length > 0) {
+          appendSyncLogs(data.logs);
+        }
       }
     } catch (error) {
       console.error('Failed to trigger sync:', error);
+      setActiveSyncJob(null);
     }
   };
 
