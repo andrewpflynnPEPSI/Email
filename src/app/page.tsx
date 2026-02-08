@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react';
 import { useEffect, useState, useCallback } from 'react';
 import { useEmailStore } from '@/store/email-store';
 import Sidebar from '@/components/layout/Sidebar';
+import { useIsElectron } from '@/components/layout/ElectronTitleBar';
 import EmailList from '@/components/email/EmailList';
 import EmailDetail from '@/components/email/EmailDetail';
 import ComposeModal from '@/components/compose/ComposeModal';
@@ -32,6 +33,7 @@ function EmailApp() {
     setCalendarEvents, setCalendars, setCalendarLoading,
   } = useEmailStore();
 
+  const isElectron = useIsElectron();
   const [isAccountManagerOpen, setAccountManagerOpen] = useState(false);
 
   // Sync session to accounts store
@@ -139,7 +141,7 @@ function EmailApp() {
 
   if (status === 'loading') {
     return (
-      <div className="h-screen flex items-center justify-center bg-zinc-950">
+      <div className="h-screen flex flex-col items-center justify-center bg-zinc-950" style={isElectron ? { WebkitAppRegion: 'drag' } as React.CSSProperties : undefined}>
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
             <Zap size={24} className="text-white" />
@@ -176,57 +178,67 @@ function EmailApp() {
   }
 
   return (
-    <div className="h-screen flex overflow-hidden bg-zinc-950">
+    <div className="h-screen flex flex-col overflow-hidden bg-zinc-950">
       <KeyboardShortcuts />
 
-      {/* Sidebar */}
-      <Sidebar />
+      {/* Electron: draggable title bar region for macOS traffic lights */}
+      {isElectron && (
+        <div
+          className="h-8 w-full flex-shrink-0 bg-zinc-950 border-b border-zinc-800/50"
+          style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+        />
+      )}
 
-      {/* Main Content */}
-      {currentView === 'mail' ? (
-        <div className="flex-1 flex overflow-hidden">
-          {/* Email List */}
-          <div className={cn(
-            'flex flex-col border-r border-zinc-800 overflow-hidden transition-all',
-            splitView
-              ? 'w-[400px] min-w-[350px]'
-              : selectedThread ? 'hidden' : 'flex-1'
-          )}>
-            {/* List Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-sm">
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm font-semibold text-white capitalize">{currentMailbox}</h2>
-                {threads.length > 0 && (
-                  <span className="text-xs text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded-full">
-                    {threads.length}
-                  </span>
-                )}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Sidebar */}
+        <Sidebar />
+
+        {/* Main Content */}
+        {currentView === 'mail' ? (
+          <div className="flex-1 flex overflow-hidden">
+            {/* Email List */}
+            <div className={cn(
+              'flex flex-col border-r border-zinc-800 overflow-hidden transition-all',
+              splitView
+                ? 'w-[400px] min-w-[350px]'
+                : selectedThread ? 'hidden' : 'flex-1'
+            )}>
+              {/* List Header */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-sm">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm font-semibold text-white capitalize">{currentMailbox}</h2>
+                  {threads.length > 0 && (
+                    <span className="text-xs text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded-full">
+                      {threads.length}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setAccountManagerOpen(true)}
+                    className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors"
+                    title="Manage accounts"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setAccountManagerOpen(true)}
-                  className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors"
-                  title="Manage accounts"
-                >
-                  <Plus size={16} />
-                </button>
-              </div>
+
+              <EmailList />
             </div>
 
-            <EmailList />
+            {/* Email Detail */}
+            <div className={cn(
+              'flex-1 overflow-hidden',
+              !splitView && !selectedThread && 'hidden'
+            )}>
+              <EmailDetail />
+            </div>
           </div>
-
-          {/* Email Detail */}
-          <div className={cn(
-            'flex-1 overflow-hidden',
-            !splitView && !selectedThread && 'hidden'
-          )}>
-            <EmailDetail />
-          </div>
-        </div>
-      ) : (
-        <CalendarView />
-      )}
+        ) : (
+          <CalendarView />
+        )}
+      </div>
 
       {/* Overlays */}
       <ComposeModal />
