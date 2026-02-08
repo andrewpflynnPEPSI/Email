@@ -18,6 +18,7 @@ import {
   Settings,
   Command,
   Calendar,
+  RefreshCw,
 } from 'lucide-react';
 
 const MAILBOXES: { type: MailboxType; label: string; icon: typeof Inbox; shortcut: string }[] = [
@@ -37,6 +38,7 @@ export default function Sidebar() {
     isSidebarCollapsed, toggleSidebar,
     setComposeOpen, setSearchOpen, setCommandPaletteOpen,
     currentView, setCurrentView,
+    syncRules, setSyncConfigOpen,
   } = useEmailStore();
 
   return (
@@ -193,9 +195,30 @@ export default function Sidebar() {
         </nav>
       )}
 
-      {/* Calendar view spacer */}
+      {/* Calendar view: Sync shortcut */}
       {currentView === 'calendar' && (
-        <div className="flex-1" />
+        <div className="flex-1 px-3 py-2">
+          <button
+            onClick={() => setSyncConfigOpen(true)}
+            className={cn(
+              'flex items-center gap-2 w-full rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-colors',
+              isSidebarCollapsed ? 'p-2.5 justify-center' : 'px-3 py-2'
+            )}
+            title="Calendar Sync"
+          >
+            <RefreshCw size={18} />
+            {!isSidebarCollapsed && (
+              <>
+                <span className="flex-1 text-left text-sm">Calendar Sync</span>
+                {syncRules.filter(r => r.status === 'active').length > 0 && (
+                  <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded-full font-medium">
+                    {syncRules.filter(r => r.status === 'active').length}
+                  </span>
+                )}
+              </>
+            )}
+          </button>
+        </div>
       )}
 
       {/* Accounts */}

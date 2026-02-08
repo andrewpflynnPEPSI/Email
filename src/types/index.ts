@@ -134,3 +134,59 @@ export interface CreateEventData {
   calendarId?: string;
   accountId: string;
 }
+
+// Calendar Sync Types (OneCal-style)
+export type SyncDirection = 'one-way' | 'two-way';
+export type SyncPrivacyLevel = 'full' | 'title-only' | 'busy-only';
+export type SyncRuleStatus = 'active' | 'paused' | 'error';
+
+export interface SyncRule {
+  id: string;
+  name: string;
+  sourceCalendarId: string;
+  sourceAccountId: string;
+  destinationCalendarId: string;
+  destinationAccountId: string;
+  direction: SyncDirection;
+  privacyLevel: SyncPrivacyLevel;
+  blockerTitle: string; // Template: "Busy", "Blocked", or "{title}" for full copy
+  syncFrequencyMinutes: number;
+  status: SyncRuleStatus;
+  createdAt: string;
+  lastSyncAt: string | null;
+  lastError: string | null;
+}
+
+export interface SyncedEvent {
+  id: string;
+  syncRuleId: string;
+  sourceEventId: string;
+  sourceCalendarId: string;
+  sourceAccountId: string;
+  destinationEventId: string;
+  destinationCalendarId: string;
+  destinationAccountId: string;
+  lastSyncedAt: string;
+  sourceHash: string; // Hash of source event data to detect changes
+}
+
+export interface SyncLogEntry {
+  id: string;
+  syncRuleId: string;
+  timestamp: string;
+  action: 'created' | 'updated' | 'deleted' | 'skipped' | 'error';
+  sourceEventTitle: string;
+  details: string;
+}
+
+export interface SyncJob {
+  id: string;
+  syncRuleId: string;
+  status: 'running' | 'completed' | 'failed';
+  startedAt: string;
+  completedAt: string | null;
+  eventsCreated: number;
+  eventsUpdated: number;
+  eventsDeleted: number;
+  errors: string[];
+}

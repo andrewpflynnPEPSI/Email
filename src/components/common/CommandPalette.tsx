@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { useEmailStore } from '@/store/email-store';
 import {
   Inbox, Star, Send, FileEdit, Trash2, Mail, Search,
-  Plus, Archive, MailOpen, Tag, ChevronRight, Command, Calendar,
+  Plus, Archive, MailOpen, Tag, ChevronRight, Command, Calendar, RefreshCw,
 } from 'lucide-react';
 
 interface CommandItem {
@@ -21,6 +21,7 @@ export default function CommandPalette() {
     isCommandPaletteOpen, setCommandPaletteOpen,
     setCurrentMailbox, setComposeOpen, setSearchOpen,
     setCurrentView, setCalendarViewMode, setCreateEventOpen,
+    setSyncConfigOpen, setSyncStatusOpen,
   } = useEmailStore();
 
   const [query, setQuery] = useState('');
@@ -46,8 +47,10 @@ export default function CommandPalette() {
     { id: 'cal-month', label: 'Calendar: Month view', icon: Calendar, category: 'Calendar', action: () => { setCommandPaletteOpen(false); setCurrentView('calendar'); setCalendarViewMode('month'); } },
     { id: 'cal-agenda', label: 'Calendar: Agenda view', icon: Calendar, category: 'Calendar', action: () => { setCommandPaletteOpen(false); setCurrentView('calendar'); setCalendarViewMode('agenda'); } },
     { id: 'new-event', label: 'Create new event', icon: Plus, category: 'Calendar', action: () => { setCommandPaletteOpen(false); setCurrentView('calendar'); setCreateEventOpen(true); } },
+    { id: 'sync-config', label: 'Calendar Sync Settings', icon: RefreshCw, category: 'Calendar Sync', action: () => { setCommandPaletteOpen(false); setCurrentView('calendar'); setSyncConfigOpen(true); } },
+    { id: 'sync-status', label: 'View Sync Status', icon: RefreshCw, category: 'Calendar Sync', action: () => { setCommandPaletteOpen(false); setCurrentView('calendar'); setSyncStatusOpen(true); } },
     { id: 'go-mail', label: 'Go to Mail', shortcut: 'G M', icon: Mail, category: 'Navigation', action: () => { setCommandPaletteOpen(false); setCurrentView('mail'); } },
-  ], [setCommandPaletteOpen, setComposeOpen, setCurrentMailbox, setSearchOpen, setCurrentView, setCalendarViewMode, setCreateEventOpen]);
+  ], [setCommandPaletteOpen, setComposeOpen, setCurrentMailbox, setSearchOpen, setCurrentView, setCalendarViewMode, setCreateEventOpen, setSyncConfigOpen, setSyncStatusOpen]);
 
   const filtered = useMemo(() => {
     if (!query) return commands;

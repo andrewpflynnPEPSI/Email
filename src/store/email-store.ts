@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { EmailAccount, EmailThread, MailboxType, ComposeEmail, AppView, CalendarViewMode, CalendarEvent, CalendarInfo, CreateEventData } from '@/types';
+import { EmailAccount, EmailThread, MailboxType, ComposeEmail, AppView, CalendarViewMode, CalendarEvent, CalendarInfo, CreateEventData, SyncRule, SyncedEvent, SyncLogEntry, SyncJob } from '@/types';
 
 const ACCOUNT_COLORS = [
   '#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6',
@@ -79,6 +79,24 @@ interface EmailStore {
   setCreateEventData: (data: Partial<CreateEventData> | null) => void;
   calendarLoading: boolean;
   setCalendarLoading: (loading: boolean) => void;
+
+  // Calendar Sync
+  syncRules: SyncRule[];
+  setSyncRules: (rules: SyncRule[]) => void;
+  addSyncRule: (rule: SyncRule) => void;
+  updateSyncRule: (id: string, updates: Partial<SyncRule>) => void;
+  removeSyncRule: (id: string) => void;
+  syncedEvents: SyncedEvent[];
+  setSyncedEvents: (events: SyncedEvent[]) => void;
+  syncLogs: SyncLogEntry[];
+  setSyncLogs: (logs: SyncLogEntry[]) => void;
+  appendSyncLogs: (logs: SyncLogEntry[]) => void;
+  activeSyncJob: SyncJob | null;
+  setActiveSyncJob: (job: SyncJob | null) => void;
+  isSyncConfigOpen: boolean;
+  setSyncConfigOpen: (open: boolean) => void;
+  isSyncStatusOpen: boolean;
+  setSyncStatusOpen: (open: boolean) => void;
 }
 
 export const useEmailStore = create<EmailStore>((set, get) => ({
@@ -176,4 +194,28 @@ export const useEmailStore = create<EmailStore>((set, get) => ({
   setCreateEventData: (data) => set({ createEventData: data }),
   calendarLoading: false,
   setCalendarLoading: (loading) => set({ calendarLoading: loading }),
+
+  // Calendar Sync
+  syncRules: [],
+  setSyncRules: (rules) => set({ syncRules: rules }),
+  addSyncRule: (rule) => set((state) => ({ syncRules: [...state.syncRules, rule] })),
+  updateSyncRule: (id, updates) => set((state) => ({
+    syncRules: state.syncRules.map(r => r.id === id ? { ...r, ...updates } : r),
+  })),
+  removeSyncRule: (id) => set((state) => ({
+    syncRules: state.syncRules.filter(r => r.id !== id),
+  })),
+  syncedEvents: [],
+  setSyncedEvents: (events) => set({ syncedEvents: events }),
+  syncLogs: [],
+  setSyncLogs: (logs) => set({ syncLogs: logs }),
+  appendSyncLogs: (logs) => set((state) => ({
+    syncLogs: [...logs, ...state.syncLogs].slice(0, 200), // Keep last 200 entries
+  })),
+  activeSyncJob: null,
+  setActiveSyncJob: (job) => set({ activeSyncJob: job }),
+  isSyncConfigOpen: false,
+  setSyncConfigOpen: (open) => set({ isSyncConfigOpen: open }),
+  isSyncStatusOpen: false,
+  setSyncStatusOpen: (open) => set({ isSyncStatusOpen: open }),
 }));
